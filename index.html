@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>双色3D摇骰子</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 3D 场景基础设置 */
+        .scene {
+            width: 100px;
+            height: 100px;
+            perspective: 600px;
+            margin: 20px;
+        }
+
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1.5s cubic-bezier(0.15, 0.9, 0.34, 1); /* 弹性缓动效果 */
+        }
+
+        .cube__face {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 16px; /* 圆角让骰子更可爱 */
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+            backface-visibility: hidden;
+        }
+
+        /* 红色骰子样式 */
+        .cube.red .cube__face {
+            background: #fde047; /* Tailwind red-500 */
+        }
+        
+        /* 蓝色骰子样式 */
+        .cube.blue .cube__face {
+            background: #7e22ce; /* Tailwind blue-500 */
+        }
+
+        /* 面的位置变换 */
+        .cube__face--1 { transform: rotateY(0deg) translateZ(50px); }
+        .cube__face--2 { transform: rotateY(180deg) translateZ(50px); }
+        .cube__face--3 { transform: rotateY(90deg) translateZ(50px); }
+        .cube__face--4 { transform: rotateY(-90deg) translateZ(50px); }
+        .cube__face--5 { transform: rotateX(90deg) translateZ(50px); }
+        .cube__face--6 { transform: rotateX(-90deg) translateZ(50px); }
+
+        /* 点数布局逻辑 (使用 Grid) */
+        .dot-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            width: 70%;
+            height: 70%;
+            padding: 4px;
+        }
+        
+        .dot {
+            width: 14px;
+            height: 14px;
+            background-color: white;
+            border-radius: 50%;
+            align-self: center;
+            justify-self: center;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        /* 具体的点数位置控制 */
+        /* 1点 */
+        .face-1 .dot:nth-child(1) { grid-area: 2 / 2; }
+        
+        /* 2点 */
+        .face-2 .dot:nth-child(1) { grid-area: 1 / 1; }
+        .face-2 .dot:nth-child(2) { grid-area: 3 / 3; }
+
+        /* 3点 */
+        .face-3 .dot:nth-child(1) { grid-area: 1 / 1; }
+        .face-3 .dot:nth-child(2) { grid-area: 2 / 2; }
+        .face-3 .dot:nth-child(3) { grid-area: 3 / 3; }
+
+        /* 4点 */
+        .face-4 .dot:nth-child(1) { grid-area: 1 / 1; }
+        .face-4 .dot:nth-child(2) { grid-area: 1 / 3; }
+        .face-4 .dot:nth-child(3) { grid-area: 3 / 1; }
+        .face-4 .dot:nth-child(4) { grid-area: 3 / 3; }
+
+        /* 5点 */
+        .face-5 .dot:nth-child(1) { grid-area: 1 / 1; }
+        .face-5 .dot:nth-child(2) { grid-area: 1 / 3; }
+        .face-5 .dot:nth-child(3) { grid-area: 2 / 2; }
+        .face-5 .dot:nth-child(4) { grid-area: 3 / 1; }
+        .face-5 .dot:nth-child(5) { grid-area: 3 / 3; }
+
+        /* 6点 */
+        .face-6 .dot:nth-child(1) { grid-area: 1 / 1; }
+        .face-6 .dot:nth-child(2) { grid-area: 1 / 3; }
+        .face-6 .dot:nth-child(3) { grid-area: 2 / 1; }
+        .face-6 .dot:nth-child(4) { grid-area: 2 / 3; }
+        .face-6 .dot:nth-child(5) { grid-area: 3 / 1; }
+        .face-6 .dot:nth-child(6) { grid-area: 3 / 3; }
+
+    </style>
+</head>
+<body class="bg-slate-100 h-screen flex flex-col items-center justify-center font-sans text-slate-800 select-none">
+
+    <!-- 标题与状态 -->
+    <div class="text-center mb-10">
+        <h1 class="text-3xl font-bold mb-4 tracking-wide text-slate-700">日麻掷骰子</h1>
+        <!-- 增加高度以容纳更大的结果显示，使用 flex-col 居中 -->
+        <div class="h-20 flex flex-col items-center justify-center">
+            <p class="text-slate-500 text-xl transition-all duration-300" id="statusText">点击按钮开始</p>
+        </div>
+    </div>
+
+    <!-- 骰子区域 - 已改为始终横排 (flex-row) -->
+    <div class="flex flex-row gap-8 md:gap-16 items-center justify-center mb-12">
+        
+        <!-- 红色骰子 -->
+        <div class="scene">
+            <div class="cube red" id="cubeRed">
+                <!-- 生成6个面 -->
+                <div class="cube__face cube__face--1 face-1"><div class="dot-container"><div class="dot"></div></div></div>
+                <div class="cube__face cube__face--2 face-2"><div class="dot-container"><div class="dot"></div><div class="dot"></div></div></div>
+                <div class="cube__face cube__face--3 face-3"><div class="dot-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+                <div class="cube__face cube__face--4 face-4"><div class="dot-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+                <div class="cube__face cube__face--5 face-5"><div class="dot-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+                <div class="cube__face cube__face--6 face-6"><div class="dot-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+            </div>
+        </div>
+
+        <!-- 蓝色骰子 -->
+        <div class="scene">
+            <div class="cube blue" id="cubeBlue">
+                 <!-- 生成6个面 -->
+                 <div class="cube__face cube__face--1 face-1"><div class="dot-container"><div class="dot"></div></div></div>
+                 <div class="cube__face cube__face--2 face-2"><div class="dot-container"><div class="dot"></div><div class="dot"></div></div></div>
+                 <div class="cube__face cube__face--3 face-3"><div class="dot-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+                 <div class="cube__face cube__face--4 face-4"><div class="dot-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+                 <div class="cube__face cube__face--5 face-5"><div class="dot-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+                 <div class="cube__face cube__face--6 face-6"><div class="dot-container"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 结果显示占位 (已不再使用，结果直接显示在 statusText 中) -->
+    <div class="h-8"></div>
+
+    <!-- 控制按钮 -->
+    <button id="rollBtn" onclick="rollDice()" class="group relative px-8 py-4 bg-slate-800 text-white font-bold rounded-xl shadow-[0_4px_0_0_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_rgba(0,0,0,0.3)] hover:translate-y-[2px] active:translate-y-[4px] active:shadow-none transition-all outline-none focus:ring-4 ring-slate-300">
+        <span class="flex items-center gap-2">
+            <span>开始摇动</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-180 transition-transform"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16l5 5v-5"/></svg>
+        </span>
+    </button>
+
+    <script>
+        const cubeRed = document.getElementById('cubeRed');
+        const cubeBlue = document.getElementById('cubeBlue');
+        const rollBtn = document.getElementById('rollBtn');
+        const statusText = document.getElementById('statusText');
+
+        let isRolling = false;
+
+        // 旋转角度映射表：将点数映射到 CSS rotateX/Y 的角度
+        // [x, y]
+        const rotations = {
+            1: [0, 0],
+            2: [0, -180],
+            3: [0, -90],
+            4: [0, 90],
+            5: [-90, 0],
+            6: [90, 0]
+        };
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function single(dice){
+            if (dice == 1 || dice == 5) {
+                return "（庄家）";
+            } 
+            else if (dice == 2 || dice == 6) {
+                return "（下家）";
+            }
+            else if (dice == 3) {
+                return "（对家）";
+            }
+            else {
+                return "上家";
+            }
+        }
+
+        function two(dice){
+            if (dice == 5 || dice == 9) {
+                return "（庄家）";
+            } 
+            else if (dice == 2 || dice == 6 || dice == 10) {
+                return "（下家）";
+            }
+            else if (dice == 3 || dice == 7 || dice == 11) {
+                return "（对家）";
+            }
+            else {
+                return "（上家）";
+            }
+        }
+
+        function rollDice() {
+            if (isRolling) return;
+            isRolling = true;
+            
+            // 界面状态更新
+            rollBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            // 摇动时显示灰色提示
+            statusText.innerHTML = '<span class="text-slate-400 text-xl">正在摇动...</span>';
+
+            // 生成随机点数
+            const resultRed = getRandomInt(1, 6);
+            const resultBlue = getRandomInt(1, 6);
+
+            
+            // 让我们使用 "dataset" 技巧来存储之前的旋转圈数，防止回滚。
+            let currentRound = parseInt(cubeRed.dataset.round || 0);
+            currentRound++;
+            cubeRed.dataset.round = currentRound;
+            cubeBlue.dataset.round = currentRound;
+
+            const roundMultiplier = 360 * 5; // 每次多转5圈
+
+            // 红色最终角度
+            const xBaseRed = rotations[resultRed][0];
+            const yBaseRed = rotations[resultRed][1];
+            const redX = xBaseRed + (roundMultiplier * currentRound);
+            const redY = yBaseRed + (roundMultiplier * currentRound);
+            
+            // 蓝色最终角度 (加一点随机扰动使得两个骰子不同步)
+            const xBaseBlue = rotations[resultBlue][0];
+            const yBaseBlue = rotations[resultBlue][1];
+            const blueX = xBaseBlue + (roundMultiplier * currentRound);
+            const blueY = yBaseBlue + (roundMultiplier * currentRound);
+
+            cubeRed.style.transform = `rotateX(${redX}deg) rotateY(${redY}deg)`;
+            cubeBlue.style.transform = `rotateX(${blueX}deg) rotateY(${blueY}deg)`;
+
+            // 等待动画结束 (CSS transition 设置为 1.5s)
+            setTimeout(() => {
+                isRolling = false;
+                rollBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                const totalValue = resultRed + resultBlue; // 计算总点数
+
+                // 显示结果：总点数现在使用 text-2xl，与周围文字大小保持一致
+                statusText.innerHTML = `
+                    <div class="text-2xl font-bold drop-shadow-sm">
+                        总点数: <span class="text-green-600 text-2xl font-bold">${totalValue}${two(totalValue)}</span>
+                    </div>
+                    <div class="text-lg text-slate-600 mt-1">
+                        <span class="text-yellow-400 font-semibold mr-4">黄色: ${resultRed}${single(resultRed)}</span>
+                        <span class="text-purple-600 font-semibold">紫色: ${resultBlue}</span>
+                    </div>
+                `;
+                
+            }, 1500);
+        }
+    </script>
+</body>
+
+</html>
+
