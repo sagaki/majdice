@@ -188,23 +188,8 @@
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
-        function single(dice){
-            if (dice == 1 || dice == 5) {
-                return "（庄家）";
-            } 
-            else if (dice == 2 || dice == 6) {
-                return "（下家）";
-            }
-            else if (dice == 3) {
-                return "（对家）";
-            }
-            else {
-                return "上家";
-            }
-        }
-
-        function two(dice){
-            if (dice == 5 || dice == 9) {
+        function position(dice){
+            if (dice == 1 || dice == 5 || dice == 9) {
                 return "（庄家）";
             } 
             else if (dice == 2 || dice == 6 || dice == 10) {
@@ -265,7 +250,7 @@
                 // 显示结果：总点数现在使用 text-2xl，与周围文字大小保持一致
                 statusText.innerHTML = `
                     <div class="text-2xl font-bold drop-shadow-sm">
-                        总点数: <span class="text-green-600 text-2xl font-bold">${totalValue}${two(totalValue)}</span>
+                        总点数: <span class="text-green-600 text-2xl font-bold">${totalValue}${position(totalValue)}</span>
                     </div>
                     <div class="text-lg text-slate-600 mt-1">
                         <span class="text-yellow-400 font-semibold mr-4">黄色: ${resultRed}</span>
@@ -279,5 +264,6 @@
 </body>
 
 </html>
+
 
 
