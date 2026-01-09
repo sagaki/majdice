@@ -40,12 +40,12 @@
 
         /* 红色骰子样式 */
         .cube.red .cube__face {
-            background: #fde047; /* Tailwind red-500 */
+            background: #ef4444; /* Tailwind red-500 */
         }
         
         /* 蓝色骰子样式 */
         .cube.blue .cube__face {
-            background: #7e22ce; /* Tailwind blue-500 */
+            background: #3b82f6; /* Tailwind blue-500 */
         }
 
         /* 面的位置变换 */
@@ -252,11 +252,11 @@
                     <div class="text-2xl font-bold drop-shadow-sm">
                         总点数: <span class="text-green-600 text-2xl font-bold">${totalValue}${position(totalValue)}</span>
                     </div>
-                    <div class="text-lg text-slate-600 mt-1">
-                        <span class="text-yellow-400 font-semibold mr-4">黄色: ${resultRed}</span>
-                        <span class="text-purple-600 font-semibold">紫色: ${resultBlue}</span>
-                    </div>
                 `;
+                    // <div class="text-lg text-slate-600 mt-1">
+                    //     <span class="text-red-500 font-semibold mr-4">红色: ${resultRed}</span>
+                    //     <span class="text-blue-500 font-semibold">蓝色: ${resultBlue}</span>
+                    // </div>
                 
             }, 1500);
         }
